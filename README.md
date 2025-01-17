@@ -1,2 +1,44 @@
-# DAI_project
-Implementation of mutex Lamport's Algorithm using MQTT as middleware technology
+# DAI Project
+
+This project implements a distributed mutual exclusion algorithm using MQTT and Lamport's protocol.
+
+## Requirements
+
+- Python 3.x
+- `paho-mqtt` library
+- MQTT broker (e.g., Mosquitto)
+
+## Installation
+
+1. Clone the repository:
+
+    ```sh
+    git clone https://github.com/your-username/DAI_project.git
+    cd DAI_project
+    ```
+
+2. Install the dependencies:
+
+    ```sh
+    pip install paho-mqtt
+    ```
+
+3. Configure the MQTT broker:
+
+    - Ensure you have an MQTT broker running (e.g., Mosquitto).
+    - Edit the [config.json](http://_vscodecontentref_/1) file with your MQTT broker settings.
+
+## Configuration
+
+The [config.json](http://_vscodecontentref_/2) file contains the necessary configurations for the project:
+
+```json
+{
+    "broker": "localhost",
+    "port": 1883,
+    "request_topic": "requests",
+    "releases_topic": "releases",
+    "ack_topic": "acks/",
+    "heart_beat_topic": "heartbeat/",
+    "num_processes": 5
+}
