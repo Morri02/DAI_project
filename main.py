@@ -1,4 +1,5 @@
-from process import LamportProcess
+from process_MQTT import LamportProcessMQTT
+from process_socket import LamportProcessTCP
 import time
 import random
 import json
@@ -93,23 +94,29 @@ class Coordinator(Thread):
 
 class LamportMutex():
     def __init__(self):
-        self.processes = [LamportProcess(i, NUM_PROCESS, broker=BROKER, port=PORT, log_file_path=f"log_files/{i}.log") for i in range(NUM_PROCESS)]
-        self.observer = Coordinator()
+        #self.processes_MQTT = [LamportProcessMQTT(i, NUM_PROCESS, broker=BROKER, port=PORT, log_file_path=f"log_files/MQTT{i}.log") for i in range(NUM_PROCESS)]
+        #self.observer = Coordinator()
+        self.processes_socket = [LamportProcessTCP(i, NUM_PROCESS, log_file_path=f"log_files/socket{i}.log") for i in range(NUM_PROCESS)]
+    
     def start(self):
         start = time.time()
-        self.observer.start()
-        for process in self.processes:
+        #self.observer.start()
+        for process in self.processes_socket:
             print("Starting process", process.process_id)
             process.start()
         
-        if self.observer.is_alive():
-            self.observer.join()
-            print("Stopping processes")
-            for process in self.processes:
-                process.stop()
-                process.join()
+        # if self.observer.is_alive():
+        #     self.observer.join()
+        #     print("Stopping processes")
+        #     for process in self.processes:
+        #         process.stop()
+        #         process.join()
         
-        for process in self.processes:
+        for process in self.processes_socket:
+            process.join()
+            process.stop()
+
+        for process in self.processes_socket:
             n = process.n
             print(f"Process {process.process_id} acquired the resource {n} times out of the {process.num_operations} possible.")
         

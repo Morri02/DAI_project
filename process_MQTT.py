@@ -17,7 +17,7 @@ TOPIC_RELEASES = d["releases_topic"]
 TOPIC_ACKS = d["ack_topic"]
 TOPIC_HEART_BEAT = d["heart_beat_topic"]
 
-class LamportProcess(Thread):
+class LamportProcessMQTT(Thread):
     def __init__(self, process_id, num_process, broker="localhost", port=1883, log_file_path=None):
         super().__init__()
         self.process_id = process_id

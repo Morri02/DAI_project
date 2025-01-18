@@ -1,4 +1,4 @@
 __pycache__/
 log_files/
 venv/
-config.json
+queue.txt

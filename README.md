@@ -30,15 +30,5 @@ This project implements a distributed mutual exclusion algorithm using MQTT and 
 
 ## Configuration
 
-The [config.json](http://_vscodecontentref_/2) file contains the necessary configurations for the project:
+The [`config.json`](config.json) file contains the necessary configurations for the project:
 
-```json
-{
-    "broker": "localhost",
-    "port": 1883,
-    "request_topic": "requests",
-    "releases_topic": "releases",
-    "ack_topic": "acks/",
-    "heart_beat_topic": "heartbeat/",
-    "num_processes": 5
-}
