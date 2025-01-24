@@ -35,7 +35,7 @@ class LamportProcessMQTT(Thread):
         self.client.loop_start()
 
         self.stop_ = False
-        self.num_operations = 3
+        self.num_operations = random.randint(5, 10)
 
         self.log_file_path = log_file_path
         self.n = 0 #Number of time it acquired the resource
@@ -100,17 +100,21 @@ class LamportProcessMQTT(Thread):
         elif topic.startswith(f"{TOPIC_ACKS}{self.process_id}"):
             self.acks_received[payload['ack_from']] += 1
 
+    def send_request(self):
+        self.client.publish(TOPIC_REQUESTS, json.dumps({"process_id": self.process_id, "timestamp": self.timestamp}))
+
 
     def get_resource(self):
         self.timestamp += 1
-        self.client.publish(TOPIC_REQUESTS, json.dumps({"process_id": self.process_id, "timestamp": self.timestamp}))
         self.queue.append({"timestamp": self.timestamp, "process_id": self.process_id})
-        
-        self.log(f"[+]Processo {self.process_id} richiede la risorsa")
+        self.queue.sort(key=lambda x: (x["timestamp"], x["process_id"]))
+        self.send_request()
+        time.sleep(1)
+        self.log(f"[+]Processo {self.process_id} richiede la risorsa, timestamp: {self.timestamp}")
 
         start = time.perf_counter()
         while self.acks_received.count(0) > 1 or (len(self.queue) > 0 and self.queue[0]["process_id"] != self.process_id):
-            time.sleep(0.1)
+            time.sleep(0.5)
             if self.log_file_path:
                 with open(self.log_file_path.split('.')[0] + "_wait.txt", "a") as f:
                     if self.acks_received.count(0) > 1:

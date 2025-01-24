@@ -2,7 +2,6 @@
     "broker": "localhost",
     "port": 1883,
     "num_processes": 5,
-    "process_id": 1,
     "request_topic": "requests",
     "releases_topic": "releases",
     "ack_topic": "acks/",

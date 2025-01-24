@@ -1,6 +1,7 @@
 from process_MQTT import LamportProcessMQTT
 from process_socket import LamportProcessTCP
 import time
+import sys
 import random
 import json
 from threading import Thread
@@ -17,6 +18,7 @@ TOPIC_RELEASES = d["releases_topic"]
 TOPIC_ACKS = d["ack_topic"]
 TOPIC_HEART_BEAT = d["heart_beat_topic"]
 NUM_PROCESS = d["num_processes"]
+#NUM_OPERATIONS = d["num_ops"]
 
 class Coordinator(Thread):
     def __init__(self):
@@ -64,7 +66,7 @@ class Coordinator(Thread):
             self.empty_queue += 1
         else:
             self.empty_queue = 0
-        if self.empty_queue >= 10:
+        if self.empty_queue >= 20:
             self.stop()
             print("Observer stopped.")
             return
@@ -93,39 +95,62 @@ class Coordinator(Thread):
                 break
 
 class LamportMutex():
-    def __init__(self):
-        #self.processes_MQTT = [LamportProcessMQTT(i, NUM_PROCESS, broker=BROKER, port=PORT, log_file_path=f"log_files/MQTT{i}.log") for i in range(NUM_PROCESS)]
-        #self.observer = Coordinator()
-        self.processes_socket = [LamportProcessTCP(i, NUM_PROCESS, log_file_path=f"log_files/socket{i}.log") for i in range(NUM_PROCESS)]
-    
+    def __init__(self, type="MQTT"):
+        self.type = type
+        print("Type:", self.type)
+        if type == "MQTT":
+            #self.processes = [LamportProcessMQTT(i, NUM_PROCESS, broker=BROKER, port=PORT, log_file_path=f"log_files/MQTT{i}.log") for i in range(NUM_PROCESS)]
+            self.processes = [LamportProcessMQTT(i, NUM_PROCESS, broker=BROKER, port=PORT, log_file_path=f"log_files/all_mqtt.log") for i in range(NUM_PROCESS)]
+            self.observer = Coordinator()
+        elif type == "SOCKET":
+            #self.processes = [LamportProcessTCP(i, NUM_PROCESS, log_file_path=f"log_files/socket{i}.log") for i in range(NUM_PROCESS)]
+            self.processes = [LamportProcessTCP(i, NUM_PROCESS, log_file_path=f"log_files/all_socket.log") for i in range(NUM_PROCESS)]
+        else:
+            raise ValueError("Invalid type")
+        
     def start(self):
         start = time.time()
-        #self.observer.start()
-        for process in self.processes_socket:
+        for process in self.processes:
             print("Starting process", process.process_id)
             process.start()
         
-        # if self.observer.is_alive():
-        #     self.observer.join()
-        #     print("Stopping processes")
-        #     for process in self.processes:
-        #         process.stop()
-        #         process.join()
-        
-        for process in self.processes_socket:
-            process.join()
-            process.stop()
+        if self.type == "MQTT":
+            self.observer.start()
+            if self.observer.is_alive():
+                self.observer.join()
+                print("Stopping processes")
+                for process in self.processes:
+                    process.stop()
+                    process.join()
+        else:
+            while True:
+                time.sleep(1)
+                stop = True
+                for process in self.processes:
+                    if process.executated_op < process.num_operations:
+                        stop = False
+                        break
+                if stop:
+                    break
 
-        for process in self.processes_socket:
+        for process in self.processes:
+            process.stop()
+            process.join()
+
+        for process in self.processes:
             n = process.n
             print(f"Process {process.process_id} acquired the resource {n} times out of the {process.num_operations} possible.")
         
         end = time.time()
         elapsed_time = end - start
-        print(f"Execution time:{elapsed_time} seconds ({elapsed_time/60} minutes)")
+        print(f"Execution time:{elapsed_time:.2f} seconds ({elapsed_time/60:.2f} minutes)")
 
    
 if __name__ == "__main__":
-    mutex = LamportMutex()
+    if len(sys.argv) != 2:
+        print("Usage: python main.py <MQTT|SOCKET>")
+        sys.exit(1)
+    
+    mutex = LamportMutex(sys.argv[1])
     
     mutex.start()

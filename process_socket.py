@@ -22,7 +22,8 @@ class LamportProcessTCP(threading.Thread):
             with open(self.log_file_path, "w") as f:
                 f.write(f"Processo {self.process_id}\n")
         self.stop_ = False
-        self.num_operations = 5
+        self.num_operations = random.randint(5, 10)
+        self.executated_op = 0
         self.n = 0  # Number of times it acquired the resource
 
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,6 +42,7 @@ class LamportProcessTCP(threading.Thread):
             if i != self.process_id:
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.connect((self.host, self.port_base + i))
+                self.log(f"[*]Processo {self.process_id} connesso a processo {i}")
                 self.client_sockets.append(client_socket)
             else:
                 self.client_sockets.append(None)
@@ -50,6 +52,10 @@ class LamportProcessTCP(threading.Thread):
             if self.stop_:
                 break
             self.do_something()
+            self.executated_op += 1
+        
+        while not self.stop_:
+            time.sleep(1)
 
     def do_something(self):
         if random.uniform(0, 1) < 0.5: #Random behavior
@@ -64,11 +70,12 @@ class LamportProcessTCP(threading.Thread):
         self.timestamp += 1
         self.log(f"[+]Processo {self.process_id} richiede la risorsa")
         self.queue.append({"timestamp": self.timestamp, "process_id": self.process_id})
+        self.queue.sort(key=lambda x: (x["timestamp"], x["process_id"]))
         self.send_request()
 
         start = time.perf_counter()
         while self.acks_received.count(0) > 1 or (len(self.queue) > 0 and self.queue[0]["process_id"] != self.process_id):
-            time.sleep(0.1)
+            time.sleep(0.5)
             if self.log_file_path:
                 with open(self.log_file_path.split('.')[0] + "_wait.txt", "a") as f:
                     if self.acks_received.count(0) > 1:
