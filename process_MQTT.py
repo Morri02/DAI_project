@@ -62,7 +62,7 @@ class LamportProcessMQTT(Thread):
         self.stop_ = True
         self.t.join()
 
-    def  do_something(self):
+    def do_something(self):
         if random.uniform(0, 1) < 0.5: #Random behavior
                 self.get_resource()
                 self.perform_operation()
@@ -94,6 +94,12 @@ class LamportProcessMQTT(Thread):
                 self.client.publish(f"{TOPIC_ACKS}{payload['process_id']}", json.dumps({"ack_from": self.process_id}), qos=2)
 
         elif topic == TOPIC_RELEASES:
+            # Togli solo prima occorrenza
+            # try:
+            #     self.queue.remove({"process_id": payload['process_id']})
+            # except ValueError:
+            #     pass
+
             self.queue = [req for req in self.queue if req["process_id"] != payload['process_id']]
             self.log(f"[+] {self.process_id}: Processo {payload['process_id']} ha rilasciato la risorsa")
 

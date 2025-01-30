@@ -35,5 +35,5 @@ This project implements a distributed mutual exclusion algorithm using MQTT and 
 
 ## Configuration
 
-The [`config.json`](config.json) file contains the necessary configurations for the project:
+The [`config.json`](config.json) file contains the necessary configurations for the project.
 
